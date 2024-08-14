@@ -1,0 +1,12 @@
+import numpy as np
+import pandas as pd
+df = pd.read_csv('yash.csv')
+print(df.head())
+x=df.iloc[:,:-1]
+y=df.iloc[:,-1]
+from sklearn.impute import SimpleImputer
+imputer=SimpleImputer(missing_values=np.nan,strategy='mean')
+imputer.fit(x[1:])
+print(x)
+x[1:]=imputer.transform(x[1:])
+x    
