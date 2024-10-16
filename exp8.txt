@@ -1,0 +1,59 @@
+import pandas as pd
+import numpy as np
+from collections import defaultdict
+
+# Sample dataset
+data = {
+    'Weather': ['Sunny', 'Sunny', 'Overcast', 'Rain', 'Rain', 'Rain', 'Overcast', 'Sunny', 'Sunny', 'Rain', 'Sunny', 'Overcast', 'Overcast', 'Rain'],
+    'Temperature': ['Hot', 'Hot', 'Hot', 'Mild', 'Cool', 'Cool', 'Cool', 'Mild', 'Cool', 'Mild', 'Mild', 'Mild', 'Hot', 'Mild'],
+    'Humidity': ['High', 'High', 'High', 'High', 'Normal', 'Normal', 'Normal', 'High', 'Normal', 'Normal', 'Normal', 'High', 'Normal', 'High'],
+    'Windy': ['False', 'True', 'False', 'False', 'False', 'True', 'True', 'False', 'False', 'False', 'True', 'True', 'False', 'True'],
+    'Play': ['No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'No']
+}
+df = pd.DataFrame(data)
+# Calculate prior probabilities P(Class)
+class_counts = df['Play'].value_counts()
+total_instances = len(df)
+priors = {cls: count / total_instances for cls, count in class_counts.items()}
+print("Prior Probabilities:", priors)
+# Calculate likelihood P(feature|Class) for each feature
+def calculate_likelihoods(df, feature, target):
+    likelihoods = defaultdict(lambda: defaultdict(float))
+    
+    for cls in df[target].unique():
+        subset = df[df[target] == cls]
+        for value in df[feature].unique():
+            count = len(subset[subset[feature] == value])
+            likelihoods[cls][value] = count / len(subset)
+    
+    return likelihoods
+
+# Calculate likelihood for each feature
+likelihoods = {}
+for feature in df.columns[:-1]:  # Exclude target column
+    likelihoods[feature] = calculate_likelihoods(df, feature, 'Play')
+
+print("Likelihood Probabilities:")
+for feature, likelihood in likelihoods.items():
+    print(f"\n{feature}: {dict(likelihood)}")
+def predict_naive_bayes(input_data):
+    # Calculate the posterior probability for each class
+    posteriors = {}
+    for cls in priors:
+        posterior = priors[cls]  # Start with the prior P(Class)
+        for feature, value in input_data.items():
+            if value in likelihoods[feature][cls]:  # If feature value exists in likelihoods
+                posterior *= likelihoods[feature][cls][value]  # Multiply by P(feature|Class)
+            else:
+                posterior *= 0  # Assign zero if value not in training data
+        posteriors[cls] = posterior
+    
+    # Return class with the highest posterior
+    return max(posteriors, key=posteriors.get), posteriors
+
+# Test input for prediction
+test_input = {'Weather': 'Sunny', 'Temperature': 'Cool', 'Humidity': 'High', 'Windy': 'False'}
+predicted_class, posteriors = predict_naive_bayes(test_input)
+
+print("\nPosterior Probabilities:", posteriors)
+print("Predicted Class:", predicted_class)
