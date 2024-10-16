@@ -1,0 +1,45 @@
+import numpy as np
+import pandas as pd
+from sklearn.datasets import load_iris
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.preprocessing import LabelEncoder
+# Load the Iris dataset
+data = load_iris()
+df = pd.DataFrame(data.data, columns=data.feature_names)
+df['target'] = data.target
+
+# Encode target if needed
+le = LabelEncoder()
+df['target'] = le.fit_transform(df['target'])
+def entropy(y):
+    unique, counts = np.unique(y, return_counts=True)
+    probabilities = counts / counts.sum()
+    return -np.sum(probabilities * np.log2(probabilities))
+def information_gain(data, feature, target='target'):
+    # Overall entropy of the dataset
+    total_entropy = entropy(data[target])
+    
+    # Values and their frequencies for the given feature
+    values, counts = np.unique(data[feature], return_counts=True)
+    
+    # Weighted feature entropy
+    weighted_entropy = np.sum([
+        (counts[i] / np.sum(counts)) * entropy(data[data[feature] == v][target])
+        for i, v in enumerate(values)
+    ])
+    
+    # Information Gain calculation
+    return total_entropy - weighted_entropy
+
+# Calculate Information Gain for each feature
+info_gains = {feature: information_gain(df, feature) for feature in df.columns[:-1]}
+print("Information Gain for each feature:", info_gains)
+root_node = max(info_gains, key=info_gains.get)
+print("Root node chosen based on Information Gain:", root_node)
+# Train a decision tree using scikit-learn
+clf = DecisionTreeClassifier(criterion='entropy', random_state=0)
+clf.fit(df[data.feature_names], df['target'])
+
+# Get the feature corresponding to the root node chosen by scikit-learn
+sklearn_root_node = data.feature_names[clf.tree_.feature[0]]
+print("Root node chosen by scikit-learn Decision Tree:", sklearn_root_node)
