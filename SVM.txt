@@ -1,0 +1,27 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.svm import SVR
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+from sklearn.datasets import make_regression
+
+# Generate synthetic data for regression
+X, y = make_regression(n_samples=100, n_features=1, noise=0.1, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Create and fit the SVR model
+svr = SVR(kernel='rbf', C=1.0, epsilon=0.1)
+svr.fit(X_train, y_train)
+# Make predictions
+y_pred = svr.predict(X_test)
+
+# Calculate Mean Squared Error
+mse = mean_squared_error(y_test, y_pred)
+print("Mean Squared Error:", mse)
+# Plotting
+plt.scatter(X, y, color='blue', label='Data Points')
+plt.plot(X, svr.predict(X), color='red', label='SVR Model')
+plt.xlabel('Feature')
+plt.ylabel('Target')
+plt.title('Support Vector Regression')
+plt.legend()
+plt.show()
